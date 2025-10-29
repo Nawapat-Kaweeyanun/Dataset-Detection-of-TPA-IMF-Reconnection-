@@ -1,5 +1,5 @@
 """
-Edition Date: 2025-September-01
+Edition Date: 2025-October-21
 @author: Nawapat Kaweeyanun
 """
 
@@ -153,7 +153,8 @@ class SGExtract(object):
             self.EDR_Day_Disk_Data = None
             self.EDR_Night_Disk_Data = vardict
 
-    def EDR_Aurora_Plot(self,datadict,Chan,mode='light',save=False,savefolder=None,data_record=False):
+    def EDR_Aurora_Plot(self,datadict,Chan,mode='light',cap='B',cbar_on=True,
+                        save=False,savefolder=None,data_record=False):
         #Method for plotting EDR-Aurora data in AACGM projection
         #This method is not called as part of initialisation, therefore must be called separately.
         #Assume the magnetic latitude, longitude, and magnetic local times (MLT) are already in AACGM.
@@ -294,16 +295,24 @@ class SGExtract(object):
                 Sdt = dt.datetime(self.stop_dt.year,self.stop_dt.month,self.stop_dt.day,
                                   int(UTS_hr[i]),int(UTS_min[i]),int(UTS_s[i]))
             elif self.start_dt.day != self.stop_dt.day:
-                if UTN_hr[i] > 21: #within last 2 hours of yesterday
-                    Ndt = dt.datetime(self.start_dt.year,self.start_dt.month,self.start_dt.day,
+                if UTN_hr[i] > 21: #Within last 2 hours of yesterday
+                    if int(UTN_hr[i]) == 24: #Measure to account for orbit that started the day before but north-cap crossing occurs after midnight.
+                        UTN_hr[i] = 0
+                    Ndt = dt.datetime(self.start_dt.year,self.start_dt.month,self.stop_dt.day,
                                       int(UTN_hr[i]),int(UTN_min[i]),int(UTN_s[i]))
+                    Sdt = dt.datetime(self.start_dt.year,self.start_dt.month,self.stop_dt.day,
+                                      int(UTS_hr[i]),int(UTN_min[i]),int(UTN_s[i]))
                 elif UTN_hr[i] < 3: #within first 2 hours of today
                     Ndt = dt.datetime(self.stop_dt.year,self.stop_dt.month,self.stop_dt.day,
                                       int(UTN_hr[i]),int(UTN_min[i]),int(UTN_s[i]))
                 
                 if UTS_hr[i] > 21:
-                    Sdt = dt.datetime(self.start_dt.year,self.start_dt.month,self.start_dt.day,
-                                      int(UTS_hr[i]),int(UTS_min[i]),int(UTS_s[i]))
+                    if int(UTS_hr[i]) == 24: #If southern cap crossing passed after midnight. Different structure from UTN_hr[i] clause above due to differing start/stop days.
+                        Sdt = dt.datetime(self.start_dt.year,self.start_dt.month,self.stop_dt.day,
+                                          int(0.0),int(UTS_min[i]),int(UTS_s[i]))
+                    else:
+                        Sdt = dt.datetime(self.start_dt.year,self.start_dt.month,self.start_dt.day,
+                                          int(UTS_hr[i]),int(UTS_min[i]),int(UTS_s[i]))
                 elif UTS_hr[i] < 3:
                     Sdt = dt.datetime(self.stop_dt.year,self.stop_dt.month,self.stop_dt.day,
                                       int(UTS_hr[i]),int(UTS_min[i]),int(UTS_s[i]))    
@@ -341,8 +350,8 @@ class SGExtract(object):
             self.UTSmed = self.stop_dt.replace(hour = UTSmed_hr, minute=UTSmed_min, second=UTSmed_s)
         
         #Create median time strings
-        UTNmed_str = '{:02d}:{:02d}:{:02d}'.format(UTNmed_hr,UTNmed_min,UTNmed_s)
-        UTSmed_str = '{:02d}:{:02d}:{:02d}'.format(UTSmed_hr,UTSmed_min,UTSmed_s)
+        UTNmed_str = self.UTNmed.strftime('%H:%M:%S')
+        UTSmed_str = self.UTSmed.strftime('%H:%M:%S')
         
         #Set up plot figure, each containing northern and southern scans of the orbit in polar projections.
         fig, ax = plt.subplots(1,2, subplot_kw={'projection': 'polar'},figsize=[12,6])
@@ -358,164 +367,94 @@ class SGExtract(object):
         else:
             raise Exception ('Incorrect Colour Mode')
             
-        #Northern scan plot sequence. In polar projection, x = angular and y = radial axes.
-        Nplot = ax[0].scatter(np.pi+(MLTFlat*np.pi/12),MagLatFlat,c=IntNFlat,
-                              s=1,norm=colors.LogNorm(vmin=thres_min,vmax=10000),
-                              cmap='turbo',zorder=0) #Use scatter to plot data points.
-        ax[0].set_theta_zero_location('N') #Set origin to be 90 deg, not 0.
-        ax[0].set_rlim(90,40,5) #Define radial latitude limit.
-        xticks_loc = ax[0].get_xticks().tolist() #Obtain angular axis ticks
-        ax[0].xaxis.set_major_locator(mticker.FixedLocator(xticks_loc)) #Set major axis using the obtained angular axis
-        ax[0].set_xticklabels(['12','15','18','21','0','3','6','9'],fontsize=14) #Label major axis values at specific MLTs. 
-        ax[0].spines['polar'].set_color(ctick) #Set angular axes edge color.
-        yticks_loc = ax[0].get_yticks().tolist() #Obtain radial axis ticks.
-        ax[0].yaxis.set_major_locator(mticker.FixedLocator(yticks_loc)) #Set major axis using the obtained radial axis
-        ax[0].set_yticklabels(['40','','60','','80',''],fontsize=14) #Label major axis values at specific latitudes. 
-        ax[0].yaxis.label.set_color(ctick) #Set radial axes ticklabel color
-        ax[0].tick_params(axis='both',which='both',colors=ctick) #Set tick color for radial axis
-        ax[0].grid(axis='both',which='both',color=ctick) #Set grid color
-        cbar0 = fig.colorbar(Nplot,ax=ax[0],label='Disk Radiance (R)',pad=0.1) #Set colorbar.
-        cbar0.outline.set_color(ctick) #Set colorbar outline color.
-        cbar0.ax.axes.tick_params(axis='y',which='both',colors=ctick,labelsize=12) #Set colorbar tick color.
-        cbar0.ax.axes.yaxis.label.set_color(ctick) #Set colorbar label color.
-        cbar0.ax.axes.yaxis.label.set_fontsize(14) #Set colorbar label fontsize.
-        ax[0].set_title('N \n' + 'Median Time = {}'.format(UTNmed_str),color=ctick,fontsize=18) #Set subplot title with median time.
+        #Set up figure for one subplot (north or south caps) or two subplots (both).
+        if cap in ['N','S']:
+            fig, ax = plt.subplots(1,1, subplot_kw={'projection': 'polar'},figsize=[4,4],squeeze=False)
+            ax_ind = [0]
+        elif cap == 'B':
+            fig, ax = plt.subplots(1,2, subplot_kw={'projection': 'polar'},figsize=[8,4],squeeze=False)
+            ax_ind = [0,1]
+        else:
+            raise Exception('Cap must be N, S, or B.')
         
-        
-        #Southern scan plot sequence (see step-by-step comments above).
-        Splot = ax[1].scatter(np.pi+(MLTFlat*np.pi/12),MagLatFlat,c=IntSFlat,
-                              s=1, norm=colors.LogNorm(vmin=thres_min,vmax=10000),
-                              cmap='turbo',zorder=0)
-        ax[1].set_theta_zero_location('N')
-        ax[1].set_rlim(90,40,5)
-        xticks_loc = ax[1].get_xticks().tolist()
-        ax[1].xaxis.set_major_locator(mticker.FixedLocator(xticks_loc))
-        ax[1].set_xticklabels(['12','15','18','21','0','3','6','9'],fontsize=14)
-        ax[1].spines['polar'].set_color(ctick)
-        yticks_loc = ax[1].get_yticks().tolist()
-        ax[1].yaxis.set_major_locator(mticker.FixedLocator(yticks_loc))
-        ax[1].set_yticklabels(['-40','','-60','','-80',''],fontsize=14)
-        ax[1].yaxis.label.set_color(ctick)
-        ax[1].tick_params(axis='both',which='both',colors=ctick)
-        ax[1].grid(axis='both',which='both',color=ctick)
-        cbar1 = fig.colorbar(Splot,ax=ax[1],label='Disk Radiance (R)',pad=0.1)
-        cbar1.outline.set_color(ctick)
-        cbar1.ax.axes.tick_params(axis='y',which='both',colors=ctick,labelsize=12)
-        cbar1.ax.axes.yaxis.label.set_color(ctick)
-        cbar1.ax.axes.yaxis.label.set_fontsize(14)
-        ax[1].set_title('S \n' + 'Median Time = {}'.format(UTSmed_str),color=ctick,fontsize=18)
-    
-        #Set figure title, if desired.
-        #fig.suptitle('Disk Radiance Orbit {} {}'.format(self.StopOrbNo,chan_str) + '\n ' 
-        #             + str(self.start_dt) + ' -- ' + str(self.stop_dt),color=ctick)
+        #Create instrument name string so no need to import new input
+        if self.Instr == 'TIMED':
+            instr_name = 'GUVI'
+        else:
+            instr_name = 'SSUSI'
+            
+        #Loop over 1 or 2 axis indices.     
+        for ind in ax_ind:
+            #Set angular axis properties.
+            ax[0,ind].set_theta_zero_location('N')
+            ax[0,ind].set_rlim(90,40,5)
+            xticks_loc = ax[0,ind].get_xticks().tolist()
+            ax[0,ind].xaxis.set_major_locator(mticker.FixedLocator(xticks_loc))
+            ax[0,ind].set_xticklabels(['12','15','18','21','0','3','6','9'],fontsize=12)
+            ax[0,ind].spines['polar'].set_color(ctick) #set angular axis color
+            
+            #Set radial axis properties and plot data.
+            #Different latitude labels for northern and southern caps.
+            #Because two-subplots figures are always ordered north then south, can save some if-else branches.
+            yticks_loc = ax[0,ind].get_yticks().tolist()
+            ax[0,ind].yaxis.label.set_color(ctick) #set y-axis ticklabel color
+            ax[0,ind].tick_params(axis='both',which='both',colors=ctick) #set tick color both axes
+            ax[0,ind].grid(axis='both',which='both',color=ctick) #set grid color
+            if ind == 0:
+                if cap in ['N','B']:
+                    ax[0,ind].yaxis.set_major_locator(mticker.FixedLocator(yticks_loc))
+                    ax[0,ind].set_yticklabels(['','50','60','70','',''],fontsize=10)
+                    ax[0,ind].set_title('{} North\n{}'.format(instr_name,UTNmed_str) ,color=ctick,fontsize=12)
+                    im = ax[0,ind].scatter(np.pi+(MLTFlat*np.pi/12),MagLatFlat,c=IntNFlat,
+                                           s=1,norm=colors.LogNorm(vmin=thres_min,vmax=10000),
+                                           cmap='turbo',zorder=0)
+                elif cap == 'S':
+                    ax[0,ind].yaxis.set_major_locator(mticker.FixedLocator(yticks_loc))
+                    ax[0,ind].set_yticklabels(['','-50','-60','-70','',''],fontsize=10)
+                    ax[0,ind].set_title('{} South\n{}'.format(instr_name,UTSmed_str),color=ctick,fontsize=12)
+                    im = ax[0,ind].scatter(np.pi+(MLTFlat*np.pi/12),MagLatFlat,c=IntSFlat,
+                                           s=1,norm=colors.LogNorm(vmin=thres_min,vmax=10000),
+                                           cmap='turbo',zorder=0)
+            elif ind == 1: #ind == 1 is always southern cap
+                ax[0,ind].yaxis.set_major_locator(mticker.FixedLocator(yticks_loc))
+                ax[0,ind].set_yticklabels(['','-50','-60','-70','',''],fontsize=10)
+                ax[0,ind].set_title('{} South\n{}'.format(instr_name,UTSmed_str),color=ctick,fontsize=12)
+                im = ax[0,ind].scatter(np.pi+(MLTFlat*np.pi/12),MagLatFlat,c=IntSFlat,
+                                      s=1, norm=colors.LogNorm(vmin=thres_min,vmax=10000),
+                                      cmap='turbo',zorder=0)
+        #Set color bar properties and figure layouts.
+        if cbar_on == True:
+            if cap in ['N','S']:
+                fig.subplots_adjust(left=0.10,right=0.72,bottom=0.06,top=0.88,wspace=0.2,hspace=0.5)
+                cbar_ax = fig.add_axes([0.82,0.10,0.04,0.75]) #set axis location
+                cb = plt.colorbar(im,cax=cbar_ax) #use southern plot, already set same colour limits for the two capscb.ax.tick_params(labelsize=24)
+                cb.set_label(label='Radiance (R)',size=12,family='sans-serif',color=ctick)
+                cb.ax.axes.tick_params(axis='y',which='both',colors=ctick) #set colorbar tick color
+            elif cap == 'B':
+                fig.subplots_adjust(left=0.05,right=0.85,bottom=0.01,top=0.90,wspace=0.2,hspace=0.5)
+                cbar_ax = fig.add_axes([0.90,0.095,0.02,0.81]) #set axis location
+                cb = plt.colorbar(im,cax=cbar_ax) #use southern plot, already set same colour limits for the two capscb.ax.tick_params(labelsize=24)
+                cb.set_label(label='Radiance (R)',size=12,family='sans-serif',color=ctick)
+                cb.ax.axes.tick_params(axis='y',which='both',colors=ctick) #set colorbar tick color
+        else:
+            plt.tight_layout()
         
         #Save figure, if prompted.
         if save == True:
             #Create file save name.
-            savename = 'DiskRad_{}-{}-{}_Orb{}_{}.png'.format(self.stop_dt.year,self.stop_dt.month,
-                                                              self.stop_dt.day,self.StopOrbNo,
-                                                              chan_str.replace(' ','_'))
-            #Create save directory name in Savefolder/instrument/edr-aur/year/doy/channel.
-            #Define day by final datetime or the orbit.
+            savename = '{}_{}-{}-{}_Orb{}_{}_{}.png'.format(instr_name,self.stop_dt.year,self.stop_dt.month,
+                                                            self.stop_dt.day,self.StopOrbNo,
+                                                            chan_str.replace(' ','_'),cap)
+            #Save folder date determined by orbit end datetime.
             savedir = savefolder + '/{}/edr-aur/{}/{}/{}/'.format(self.Instr.lower(),self.stop_dt.year,
-                                                               self.stop_dt.timetuple().tm_yday,chan_str)
-                                                               #date/orb is always determined by final time
+                                                                  self.stop_dt.timetuple().tm_yday,chan_str)
     
             #Make directory and save.
             os.makedirs(savedir,exist_ok=True)
             savepath = savedir + savename
-            plt.tight_layout() #Use tight_layout to push figure to margins.
             plt.savefig(savepath,dpi=100,format='png',transparent=tchoice)
-            plt.show
             plt.close(fig)
             return fig,ax
-        
         elif save == False:
-            plt.tight_layout()
             plt.close(fig)
             return fig,ax
-
-
-"""
-Example Script for generating all SSUSU/GUVI orbit for specific spacecraft/data-type/year/day-of-year/orbit-number.
-"""
-
-"""
-#Set parameters
-
-yr_list = [2002]
-day_pick = ['077']
-orbit_pick = [9]  # pick nth orbit of dayday
-spacecraft = ['F16']
-data_type = ['edr-aur']
-
-#Set plot mode, channel, save, and data record properties.
-mode ='light'
-Chan = [3,4]
-save = True
-data_record = False
-
-#Define if plotting GUVI or SSUSI so correct filepath can be generated.
-satellite = 'GUVI'
-if satellite == 'GUVI':
-    path_start = 'Datafiles_GUVI/'
-    savefolder = 'GUVI_Day_AACGM'  
-elif satellite == 'SSUSI':
-    path_start = 'Datafiles_SSUSI/dataN/'
-    savefolder = 'SSUSI_Day_AACGM'
-
-#Loop over each input spacecraft and data type.
-for sc in spacecraft:
-    for data in data_type:
-        for yr in yr_list:
-    
-            #For each year/month layer, obtain file list, filter out non-matching day/day-of-year-orbit, then proceed down the chain.
-            #Once a final filelist is obtained, call extract data from each file and call the EDR_Aurora_Plot method.
-            #Use try-except to skip folders with no data files.
-            
-            if satellite == 'GUVI':            
-                yearfolderpath = path_start + '{}/{}/'.format(data.lower(),yr)
-            elif satellite == 'SSUSI':    
-                yearfolderpath = path_start + '{}/apl/{}/{}/'.format(sc.lower(),data.lower(),yr)
-            
-            if len(day_pick) == 0:    
-                daylist = os.listdir(yearfolderpath) #list of all day folders in the year given
-                daylist.sort()
-            else: #literally same as setting daylist = day_pick but change variable
-                daylist = []
-                for day in day_pick:
-                    daylist.append(str(day))
-            
-            for day in daylist:
-                dayfolderpath = yearfolderpath + day + '/'
-                filelist = os.listdir(dayfolderpath)
-                filelist.sort()
-                
-                if len(orbit_pick) != 0: #if an orbit is selected
-                    filelist2 = []
-                    
-                    for orb in orbit_pick:
-                        orb_ind = orb-1 #find python index
-                        filelist2.append(filelist[orb_ind])
-                    
-                    filelist2.sort()
-                    filelist = filelist2
-                          
-                os.makedirs(savefolder,exist_ok=True)
-    
-                for file in filelist:
-                    
-                    try:
-                        filename = file
-                        filepath = dayfolderpath + filename
-                        DataSet = SGExtract(filepath)
-                        fig,ax = DataSet.EDR_Aurora_Plot(DataSet.EDR_Aurora_Data,Chan,
-                                                         mode,save,savefolder,data_record)
-                        plt.show(fig)
-                    except Exception as e: #if there is error with file opening or plotting, to next file
-                        print(str(e)) 
-                        print('Cannot open or plot file {} in day {} of year {}'.format(filename,day,yr))
-                        
-                    
-                print('Plots saved for {}-{}'.format(yr,day))
-"""

@@ -1,10 +1,9 @@
-
 """
-Edition Date: 2025-August-29
+Edition Date: 2025-October-20
 @author: Nawapat Kaweeyanun
 """
 """
-Objective: Download and plot OMNI data from NASA's Coordinate Data Analysis Web (CDAWeb)
+Objective: Download and plot OMNI data from NASA's Coordinate Data Analysis (CDAS/CDAWeb)
 
 Prerequisit: cdasws module
 
@@ -13,7 +12,7 @@ Note: Example script for application provided at the end.
 
 
 """
-Define class for CDAWeb data manager
+Define class for CDA data manager
 """
 
 from cdasws import CdasWs
@@ -25,8 +24,8 @@ import matplotlib.dates as mdates
 from string import ascii_uppercase as ALC
 from matplotlib.ticker import AutoMinorLocator
 from spacepy import coordinates as coord
-from spacepy.time import Ticktock
 import csv
+import os
 
 
 class CDAWeb_Manager(object):
@@ -43,25 +42,24 @@ class CDAWeb_Manager(object):
 
         #Call CdasWs module
         self.cdas = CdasWs()
-
+        
         #Call OMNI acquisition method after checking inputs are correct
         if 'OMNI' in self.OG:
-
+        
             if self.res not in ['1hr', '5min', '1min']:
                 raise Exception('Resolution incorrect')
-
+        
             if self.grid not in ['HRO2', 'HRO']:
                 raise Exception('Grid type incorrect')
-
+        
             self.OMNI_Acquire(self.res, self.grid, self.coord)
 
-
-    def OMNI_Acquire(self, res, grid, coord):
+    def OMNI_Acquire(self, res, grid):
 
         #Get OMNI data from CdasWs module object
         datasets = self.cdas.get_datasets(observatoryGroup=self.OG,
                                           instrumentType=self.IT)
-        
+
         #Make sure the input coordinates are correct
         if coord not in ['GSE', 'GSM']:
             raise Exception('Coordinate type incorrect')
@@ -82,93 +80,25 @@ class CDAWeb_Manager(object):
 
         #Convert input parameter list into OMNI-appropriate parameter IDs
         self.varlist = []
-
         for para in self.paralist:
-
-            if para == 'B':
-                if res == '1hr':
-                    self.varlist.append('F1800')
-                else:
-                    self.varlist.append('F')
-            elif para in ['Bx','By','Bz']:
-                if res == '1hr':
-                    self.varlist.append('{}_{}1800'.format(para.upper(),coord))
-                else:
-                    self.varlist.append('{}_{}'.format(para.upper(),coord))
-            elif para == 'V':
-                if res == '1hr':
-                    self.varlist.append('V1800')
-                else:
-                    self.varlist.append('flow_spped')
-            elif para == 'Vx':
-                if res == '1hr':
-                    print('No Vx for 1 hr res. Call for Vth/Vph instead.')
-                else:
-                    self.varlist.append('Vx')
-            elif para == 'Vy':
-                if res == '1hr':
-                    print('No Vy for 1 hr res. Call for Vth/Vph instead.')
-                else:
-                    self.varlist.append('Vy')
-            elif para == 'Vz':
-                if res == '1hr':
-                    print('No Vz for 1 hr res. Call for Vth/Vph instead.')
-                else:
-                    self.varlist.append('Vz')
-            elif para == 'Vth':
-                if res == '1hr':
-                    self.varlist.append('THETA-V1800')
-                else:
-                    print('No Vth for non-1hr res.')
-            elif para == 'Vph':
-                if res == '1hr':
-                    self.varlist.append('PHI-V1800')
-                else:
-                    print('No Vph for non-1hr res.')
-            elif para == 'N':
-                if res == '1hr':
-                    self.varlist.append('N1800')
-                else:
-                    self.varlist.append('proton_density')
-            elif para == 'T':
-                if res == '1hr':
-                    self.varlist.append('T1800')
-                else:
-                    self.varlist.append('T')
-            elif para == 'P':
-                if res == '1hr':
-                    self.varlist.append('Pressure1800')
-                else:
-                    self.varlist.append('Pressure')
-            elif para == 'E':
-                if res == '1hr':
-                    self.varlist.append('E1800')
-                else:
-                    self.varlist.append('E')
-            elif para == 'beta':
-                if res == '1hr':
-                    self.varlist.append('Beta1800')
-                else:
-                    self.varlist.append('Beta')
-            elif para == 'x':
-                if res == '1hr':
-                    print('No x for 1 hr res.')
-                else:
-                    self.varlist.append('x')
-            elif para == 'y':
-                if res == '1hr':
-                    print('No y for 1 hr res.')
-                else:
-                    self.varlist.append('y')
-            elif para == 'z':
-                if res == '1hr':
-                    print('No z for 1 hr res.')
-                else:
-                    self.varlist.append('z')
-            elif para == 'CA': #Pass for clock angles
-                pass
+            if res == '1hr':
+                if para in ['F','V','N','T','E','Pressure','Beta','THETA-V','PHI-V']:
+                    self.varlist.append('{}_1800').format(para) #No upper and case sensitive
+                elif para in ['Bx']:
+                    self.varlist.append('BX_GSE1800') #Bx only in GSE
+                elif para in ['By','Bz']:                
+                    self.varlist.append('{}_{}1800'.format(para.upper(),self.coord))
             else:
-                print('No variable for {}'.format(para))
+                if para in ['F','Vx','Vy','Vz','x','y','z','T','E','Pressure','Beta']:
+                    self.varlist.append('{}'.format(para))
+                elif para in ['Bx']:
+                    self.varlist.append('BX_GSE')
+                elif para in ['By','Bz']:
+                    self.varlist.append('{}_{}'.format(para.upper(),self.coord))
+                elif para in ['V']:
+                    self.varlist.append('flow_speed')
+                elif para in ['N']:
+                    self.varlist.append('proton_density')
         
         #Obtain ordered data as xarrays
         self.data = self.cdas.get_data(MatchID, self.varlist, self.start_dt, self.end_dt,
@@ -209,8 +139,8 @@ class CDAWeb_Manager(object):
         paratemp = self.paralist.copy()
         varlist = self.varlist.copy()
 
+        #Readjust variable list in case vector components are combined.
         if veccomb == True:
-
             if 'Bx' in paratemp:
                 paratemp.remove('Bx')
                 #Have to adjust varlist too in case non Bvec/Vvec data are put in so plots can work
@@ -224,7 +154,6 @@ class CDAWeb_Manager(object):
                     raise Exception(
                         'Not all three components present for combination')
                 paratemp.append('Bvec')
-
             if 'Vx' in paratemp:
                 paratemp.remove('Vx')
                 varlist.remove([var for var in self.varlist if 'Vx' in var][0])
@@ -238,26 +167,26 @@ class CDAWeb_Manager(object):
                         'Not all three components present for combination')
                 paratemp.append('Vvec')
 
+        
         #Make figure with appropriate number of subplots
         fig, ax = plt.subplots(len(paratemp), 1, figsize=(20, 5*len(paratemp)),squeeze=False)
         subtitle_fontsize = 32
         axlabel_fontsize = 24
         axtick_fontsize = 18
-        
-        
+                
         #Define figure properties for light and dark mode
         if mode == 'light':
             ctick = 'k' #Black ticks/labels for scalars
             cline = 'k' 
             cxline = 'r' #Set color for x-y-z vectors
-            cyline = 'y'
+            cyline = 'k'
             czline = 'b'
             tchoice = False #Plot with white background
         elif mode == 'dark':
             ctick = 'w' #White ticks/labels for scalars
             cline = 'w'
             cxline = 'r' #Set color for x-y-z vectors
-            cyline = 'y'
+            cyline = 'w'
             czline = 'cyan'
             tchoice = True #Plot with transparent background
         else:
@@ -265,7 +194,7 @@ class CDAWeb_Manager(object):
 
         #Set limits and labels for different variables
         def lim_unit_setter(var):
-
+        
             if var in ['F1800', 'F']:
                 ymin = 0
                 ymax = 60
@@ -291,7 +220,7 @@ class CDAWeb_Manager(object):
                 unit = ''
             return ymin, ymax, unit
 
-        if veccomb == False: #Vector components separated
+        if veccomb == False: #Vector components separated into multiple panels.
 
             for n in np.arange(len(varlist)):
                 
@@ -306,7 +235,7 @@ class CDAWeb_Manager(object):
                 #If preferred, highlight area under curve for Bz
                 #if self.varlist[n] == 'BZ_GSE':
                 #    ax[n].fill_between(self.data['Epoch'].values,self.data[self.varlist[n]].values,np.zeros(len(self.data['Epoch'])))
-
+                
                 #Produce datetime string for x-axis labelling
                 dt64 = self.data['Epoch'].values[0]
                 unix_epoch = np.datetime64(0, 's')
@@ -344,7 +273,6 @@ class CDAWeb_Manager(object):
                                         ls='--', lw=1.5, zorder=1)
                         ax[n,0].axvline(Walen_end, color='purple',
                                         ls='--', lw=1.5, zorder=1)
-
                 
                 #x-axis label settings
                 dtime_ticks = []
@@ -466,7 +394,6 @@ class CDAWeb_Manager(object):
                 #If needed, record plot data in CSV file
                 if data_record == True:
                     self.csv_record(varlist[n])
-
 
         elif veccomb == True: #Vector components combined
 
@@ -733,70 +660,24 @@ class CDAWeb_Manager(object):
                     csvfile.close()
                     print('{}, OMNI data recorded in csv'.format(para))
 
-        #Save figure
+        #Save figure in folder sorted by start year/month/day.
+        savefolder = 'OMNIPanels/{}/{}/{}/'.format(start_dtobj.year,start_dtobj.month,
+                                                  start_dtobj.day)
+        os.makedirs(savefolder,exist_ok=True)
+        
         savename = 'OMNI'
         for para in self.paralist:
             savename = savename + '-{}'.format(para)
         savename = savename + '__{}__{}_{}.{}'.format(self.start_dt.replace(':','-'),
                                                    self.end_dt.replace(':','-'),
                                                    self.coord,saveformat)
+        savepath = savefolder + savename
+        
         plt.subplots_adjust(left=0.08, bottom=0.07, right=0.92, top=0.97,
                             wspace=0.0, hspace=0.08)  # 0.05 = 5% from left figure width/height
-        plt.savefig(savename, dpi=200, format=saveformat, transparent=tchoice)
+        plt.savefig(savepath, dpi=200, format=saveformat, transparent=tchoice)
         plt.close()
-    
-    def GSM_from_GSE(self,choice):
-        #convert GSE data array to GSM
-        #choice of magnetic field (B) or velocity (V)
-    
-        if choice == 'B':
-            xvarold = [var for var in self.varlist if 'BX' in var][0]
-            yvarold = [var for var in self.varlist if 'BY' in var][0]
-            zvarold = [var for var in self.varlist if 'BZ' in var][0]
-        elif choice == 'V':
-            xvarold = [var for var in self.varlist if 'Vx' in var][0]
-            yvarold = [var for var in self.varlist if 'Vy' in var][0]
-            zvarold = [var for var in self.varlist if 'Vz' in var][0]
-            
-        #Convert dt64 to datetime objects
-        dt_arr = []
-        unix_epoch = np.datetime64(0, 's')
-        one_second = np.timedelta64(1, 's')
-        for dtime in self.data['Epoch'].values:
-            seconds_since_epoch = (dtime-unix_epoch)/one_second
-            dt_arr.append(dt.datetime.utcfromtimestamp(seconds_since_epoch))
-        dt_arr = np.array(dt_arr)
-        
-        #Set up x-y-z and convert
-        data_arr = np.vstack((self.data[xvarold],self.data[yvarold],self.data[zvarold])).transpose()
-        GSE_values = coord.Coords(data_arr,'GSE','car')
-        GSE_values.ticks = Ticktock(dt_arr,'UTC') #Epoch is in UTC
-        GSM_values = GSE_values.convert('GSM','car')
-        
-        if 'GSE' in xvarold:
-            xvarnew = xvarold.replace('GSE','GSM')
-            yvarnew = yvarold.replace('GSE','GSM')
-            zvarnew = zvarold.replace('GSE','GSM')
-        else:
-            xvarnew = xvarold
-            yvarnew = yvarold
-            zvarnew = zvarold
 
-        #Append new (and remove old) variable to (from) XArray
-        self.data[xvarnew] =  (['Epoch'],GSM_values.data[:,0])
-        self.data[yvarnew] =  (['Epoch'],GSM_values.data[:,1])
-        self.data[zvarnew] =  (['Epoch'],GSM_values.data[:,2])
-    
-        #Replace variable names: have to do out of loop or will be affected
-        self.varlist[self.varlist.index(xvarold)] = xvarnew
-        self.varlist[self.varlist.index(yvarold)] = yvarnew
-        self.varlist[self.varlist.index(zvarold)] = zvarnew
-        self.coord = 'GSM'
-        
-        if choice == 'B': #Only drop for B since V varlist stay the same
-            data_new = self.data.drop_vars([xvarold,yvarold,zvarold]) #need to equat then redefine to be successful
-            self.data = data_new
-    
     def csv_record(self, para):
         #method for recording plot data as csv file
         start_dtstr = self.start_dt.strftime('%Y-%m-%dT%H-%M-%SZ')
@@ -812,8 +693,6 @@ class CDAWeb_Manager(object):
 
         csvfile.close()
         print('{}, OMNI data recorded in csv'.format(para))
-
-
 
 
 """

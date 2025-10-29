@@ -1,5 +1,5 @@
 """
-Edition Date: 2025-September-01
+Edition Date: 2025-October-28
 @author: Nawapat Kaweeyanun
 """
 """
@@ -88,7 +88,6 @@ class FootprintFinder(object):
                 
                 #Fill in missing microseconds if needed. Microseconds is preceded by a dot that non-microseconds items do not have.
                 if '.' not in dt_str:
-                    ('a')
                     dt_str = dt_str + '.000000'
                 
                 #Obtain dt.datetime object from formatted string, then append it to datetime list.
@@ -138,18 +137,18 @@ class FootprintFinder(object):
                  Bz_imf=-5, l_max=5000, rmax=60, rmin=1, dsmax=0.01, 
                  err=0.000001):
         #Set optional parameters for T96 trace class (see Coxon Python wrapper).
-        self.vsw_gse = vsw_gse #Solar wind velocity in GSE
+        self.vsw_gse = vsw_gse #Solar wind velocity in GSE. (Must add back Earth's motion vy = +29.78 km/s if data was corrected for it e.g., OMNI.)
         self.Pdyn = Pdyn #Dynamic pressure
         self.dst = dst #DST index
-        self.By_imf = By_imf #IMF By
-        self.Bz_imf = Bz_imf #IMF Bz
+        self.By_imf = By_imf #IMF By in GSW/GSM. (GSM only if vsw_gse has no Y or Z components.)
+        self.Bz_imf = Bz_imf #IMF Bz in GSW/GSM. (GSM only if vsw_gse has no Y or Z components.)
         self.l_max = l_max #Maximum number of tracing steps
         self.rmax = rmax #Maximum radius for tracing
         self.rmin = rmin #Minimum radius for tracing
         self.dsmax = dsmax #Maximum step size
         self.err = err #Tracing step tolerance.
         
-    def startcoord_convert(self):
+    def startcoord_convert(self,alpha=1.):
         #Method to convert starting coordinate necessary for T96 model input.
         #See Geopack Recalc_08 and Coxon Python wrapper.
         
@@ -180,7 +179,7 @@ class FootprintFinder(object):
             rgeo,colatgeo,longeo = tsy.convert.car_to_sph(xgeo,ygeo,zgeo)
             latgeo = 90-(colatgeo*180/np.pi)
             longeo = longeo*180/np.pi
-            self.rho_geo[ip] = rgeo
+            self.rho_geo[ip] = rgeo*alpha #for radial projection if needed
             self.lat_geo[ip] = latgeo
             self.lon_geo[ip] = longeo
  
@@ -318,12 +317,12 @@ for sc in sc_choice:
         SWdti = SWdti.strftime('%Y-%m-%dT%H:%M:%SZ') #Formatted to string
         SWdtf = CFT.datetime[-1] #Last datetime in file
         SWdtf = SWdtf.strftime('%Y-%m-%dT%H:%M:%SZ') #Formatted to string    
-        paralist = ['By','Bz','Vx','Vy','Vz','P'] #Average IMF Y/Z, SW velocity, and SW pressure
+        paralist = ['By','Bz''P'] #Average IMF Y/Z, and SW pressure
         OG = 'OMNI (Combined 1AU IP Data; Magnetic and Solar Indices)' #Define OMNI grids and coordinates
         IT = 'Magnetic Fields (space)'
         res = '1min'
         grid = 'HRO2'
-        coord = 'GSE' #Note: the Coxon Python wrapper should operate in GSE.
+        coord = 'GSM'
         bundle = CDAEx.CDAWeb_Manager(SWdti,SWdtf,paralist,OG,IT,res,grid,coord) #Call OMNI data from CDAWeb/
         
         #Calculate mean SW parameter values (ignoring NaNs)
@@ -332,17 +331,26 @@ for sc in sc_choice:
             bundle_para = bundle.data[para]
             para_mean = np.nanmean(bundle_para)
             para_meandict.update({para:para_mean})
+            
+            
+        #set DST value according to calibrated measurement
+        Dst = 43
+            
+        #Set footprint altitude at ~100 km (in RE)
+        Rmin = 1.01570
                 
+        
         #Set solar wind condition inputs (unspecifieds are defaults)
-        CFT.para_opt(vsw_gse=[para_meandict['Vx'],para_meandict['Vy'],para_meandict['Vz']],
-                     Pdyn=para_meandict['Pressure'],By_imf=para_meandict['BY_GSE'],Bz_imf=para_meandict['BZ_GSE'])
+        CFT.para_opt(Pdyn=para_meandict['Pressure'],by_imf=para_meandict['BY_GSM'],
+                     bz_imf = para_meandict['BZ_GSM'],rmin=Rmin)
         
         #If there is spacecraft position data in this file, skip.                       
         if len(CFT.SC_gse) == 0: 
             continue
         
         #Convert coordinates before calling T96 model.        
-        CFT.startcoord_convert()
+        alpha = 1.0 #length projection factor (for special cases where T96 model mistakenly believes Cluster to be outside of magnetosphere.)
+        CFT.startcoord_convert(alpha)
         
         #Define directory for outputs to be saved.
         SaveFolderPath = '{}/{}/{}/{}/'.format(SaveTarget,DataID,dti.year,dti.month)
