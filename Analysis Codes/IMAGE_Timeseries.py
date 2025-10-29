@@ -1,5 +1,5 @@
 """
-Edition Date: 2025-August-29
+Edition Date: 2025-October-20
 @author: Nawapat Kaweeyanun
 """
 
@@ -191,77 +191,57 @@ def timeseries_plot(dt_list,ncol,data_type,savefolder=None,save=False,mode='ligh
         col_ind = np.remainder(j,ncol)
         ax[row_ind,col_ind].remove()
         
-    #Set margins and add color bar axis, whose size depends on subplot dimension
-    if no_subplots > 1:
-        if nrow != 1 and ncol != 1:
-            fig.subplots_adjust(left=0.09,right=0.88,bottom=0.01,top=0.99,wspace=0.3,hspace=0.0) #For 2X2
-            cbar_ax = fig.add_axes([0.90,0.095,0.02,0.81]) #[hori_start,verti_start,width,height] as fraction of image, for 2x2
-            cb = plt.colorbar(m,cax=cbar_ax)
-            cb.ax.tick_params(labelsize=24)
-            cb.set_label(label='Intensity (R)',size=24,family='sans-serif')
-            cb.ax.xaxis.set_tick_params(pad=-60)
-        elif nrow != 1 and ncol == 1: 
-            fig.subplots_adjust(left=0.15,right=0.83,bottom=0.01,top=0.99,wspace=0.0,hspace=0.5) #For 1X4 
-            cbar_ax = fig.add_axes([0.85,0.015,0.05,0.97]) 
-            cb = plt.colorbar(m,cax=cbar_ax)
-            cb.ax.tick_params(labelsize=32)
-            cb.ax.xaxis.set_tick_params(pad=-60)
-            cb.set_label(label='Intensity (R)',size=32,family='sans-serif')
-        elif nrow == 1 and ncol != 1:
-            fig.subplots_adjust(left=0.09,right=0.88,bottom=0.01,top=0.99,wspace=0.6,hspace=0.0) #For 1x4 Fig. 2A-2D and Fig. 2E-2H
-            cbar_ax = fig.add_axes([0.89,0.095,0.02,0.81]) 
-            cb = plt.colorbar(m,cax=cbar_ax)
-            cb.ax.tick_params(labelsize=24)
-            cb.ax.xaxis.set_tick_params(pad=-60)
-            cb.set_label(label='Intensity (R)',size=24,family='sans-serif')
-    elif no_subplots == 1:
-        fig.subplots_adjust(left=0.03,right=0.95,bottom=0.01,top=0.99,wspace=0.10,hspace=0.0) #for 1X1
-        cbar_ax = fig.add_axes([0.86,0.14,0.02,0.72])
-        cb = plt.colorbar(m,cax=cbar_ax)
-        cb.ax.tick_params(labelsize=32)
-        cb.ax.xaxis.set_tick_params(pad=-60)
-        cb.set_label(label='Intensity (R)',size=32,family='sans-serif')
         
-    #Color bar colour settings
-    cb.ax.axes.tick_params(axis='y',which='both',colors=ctick) #Set colorbar tick color
-    cb.ax.axes.yaxis.label.set_color(ctick) #Set colorbar label color
+    #Set margins and color bar properties depending on plot dimension
+    if nrow != 1 and ncol != 1:
+        ma = [0.09,0.88,0.01,0.99,0.3,0.0] #left, right, bottom, wspace, hspace (as fraction of image)
+        cbar_axis_prop = [0.90,0.095,0.02,0.81] #hori_start, verti_start, width, height (as fraction of image)
+        cbar_axis_fontsize = 24
+        cbar_label_fontsize = 24
+    elif nrow != 1 and ncol -- 1:
+        ma = [0.15,0.83,0.01,0.99,0.0,0.5]
+        cbar_axis_prop = [0.85,0.015,0.05,0.97]
+        cbar_axis_fontsize = 32
+        cbar_label_fontsize = 32
+    elif nrow == 1 and ncol != 1:
+        ma = [0.09,0.90,0.01,0.99,0.6,0.0] 
+        cbar_axis_prop = [0.92,0.095,0.02,0.81]
+        cbar_axis_fontsize = 14
+        cbar_label_fontsize = 14
+    elif nrow == 1 and ncol == 1:
+        ma = [0.15,0.83,0.02,0.98,0.0,0.0]
+        cbar_axis_prop = [0.84,0.16,0.03,0.68]
+        cbar_axis_fontsize = 32
+        cbar_label_fontsize = 32
     
-    #Save file
-    if save == True: #If wish to save
+    #Set color bars and figure layouts.     
+    fig.subplots_adjust(left=ma[0],right=ma[1],bottom=ma[2],top=ma[3],wspace=ma[4],hspace=ma[5])
+    cbar_ax = fig.add_axes(cbar_axis_prop)
+    cb = plt.colorbar(m,cax=cbar_ax)
+    cb.ax.tick_params(labelsize=cbar_axis_fontsize)
+    cb.ax.xaxis.set_tick_params(pad=-60)
+    cb.set_label(label='Intensity (R)',size=cbar_label_fontsize,family='sans-serif')
+    cb.ax.axes.tick_params(axis='y',which='both',colors=ctick) #set colorbar tick color
+    cb.ax.axes.yaxis.label.set_color(ctick) #set colorbar label color
+
+    
+    #Save figure
+    if save == True: #if wish to save
         dt_startstr = dt_list[0].strftime('%Y%m%d%H%M%S')
         dt_endstr = dt_list[-1].strftime('%Y%m%d%H%M%S')
         
         if savefolder == None:
-            savefolder = os.getcwd() #If savefolder not given, use current
+            savefolder = os.getcwd() #if savefolder not given, use current
          
         name = 'IMAGE_Timeseries_{}_{}_{}.{}'.format(data_type,dt_startstr,dt_endstr,saveformat)
         savepath = '{}/{}/{}/{}/'.format(savefolder,data_type,dt_list[0].year,dt_list[0].month)
         os.makedirs(savepath,exist_ok=True)
-        plt.savefig(savepath + name,dpi=300,format=saveformat,transparent=tchoice)
+        plt.savefig(savepath + name,dpi=200,format=saveformat,transparent=tchoice)
         plt.close()
         hno_arr = np.array(hno_arr) #for now
         return fig,ax,hno_arr
-    elif save == False: #I doesn't wish to save
+    elif save == False: #if doesn't wish to save
         plt.close()
         hno_arr = np.array(hno_arr)
         return fig,ax,hno_arr
-
-
-"""
-Example Script 
-"""
-
-"""
-ncol = 4
-data_type = 'WIC'
-saveformat = 'svg'
-savefolder = 'IMAGE_Timeseries'
-save = True
-dt_list = [dt.datetime(2002,3,18,14,15,0),
-           dt.datetime(2002,3,18,14,30,0),
-           dt.datetime(2002,3,18,14,45,0),
-           dt.datetime(2002,3,18,15,0,0)]
-#dt_list = [dt.datetime(2002,3,16,6,30,0)]
-timeseries_plot(dt_list,ncol,data_type,savefolder,save,saveformat)
-"""
 

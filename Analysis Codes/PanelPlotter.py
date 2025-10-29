@@ -1,5 +1,5 @@
 """
-Edition Date: 2025-September-02
+Edition Date: 2025-October-27
 @author: Nawapat Kaweeyanun
 """
 """
@@ -1104,17 +1104,24 @@ class CPanel(object):
         #Remove spacecraft potential as separate plot
         if 'SC_Pot' in paralist:
             no_subplot = no_subplot - 1
+            
+            #Record spacecraft potential data in CSV if required.
+            if data_record == True:
+                for sc in sclist:
+                    comb_data = PanelDict['SC_Pot'][sc]
+                    self.csv_record('SC_Pot', sc, comb_data)
+                    print('{}, {} data recorded in csv'.format('SC_Pot',sc))
 
         if mode == 'light':
             ctick = 'k'
             cxline = 'r'
-            cyline = 'y'
+            cyline = 'k'
             czline = 'b'
             tchoice = False
         elif mode == 'dark':
             ctick = 'w'
             cxline = 'r'
-            cyline = 'y'
+            cyline = 'w'
             czline = 'cyan'
             tchoice = True
         else:
@@ -1502,8 +1509,8 @@ class CPanel(object):
                         cblabel = para.split('_')[0].title(
                         ) + ' DEF (PA = {})'.format(para.split('U')[-1]) + ' \n $\mathrm{keV/(cm^2 \cdot s \cdot sr \cdot keV)}$'
                     elif para in ['ion_fluxPA', 'H+_fluxPA', 'O+_fluxPA', 'He+_fluxPA']:
-                        flux_min = 10**4 
-                        flux_max = 10**7 
+                        flux_min = 2*10**3
+                        flux_max = 2*10**7
                         vert_min = 0
                         vert_max = 180
                         vert_label = 'Pitch Angle ($^\circ$)'
@@ -1580,10 +1587,10 @@ class CPanel(object):
                         photoe_energy = photoe_energy/1000 #Convert to keV
                             #Keep line black for clarity.
                         ax[i,0].plot(photoe_dtime, photoe_energy,
-                                     'k-', linewidth=0.5)
+                                     c='k',ls='solid', linewidth=2)
                         #Add line for 30% increase used as energy threshold.
                         ax[i,0].plot(photoe_dtime, photoe_energy *
-                                     1.30, 'k--', linewidth=0.5)
+                                     1.30, c='k',ls=(5,(10,5)), linewidth=2) #long dash with offset
 
 
                     #Set x-axis properties. See notes in multiple parameter section
@@ -1739,9 +1746,11 @@ class CPanel(object):
             savename = savename + '_{}'.format(para)
 
         savename = savename + '.{}'.format(saveformat)  # add file extension
-        plt.subplots_adjust(left=0.08, bottom=0.10, right=0.90, top=0.97,
+        plt.subplots_adjust(left=0.08, bottom=0.05, right=0.90, top=0.97,
                             wspace=0.0, hspace=0.08)  # 0.05 = 5% from left figure width/height
-
+        #Fig 3 ([0.08,0.05,0.90,0.97,0.0,0.08])
+        #Fig 4 ([0.08,0.05,0.90,0.97,0.0,0.08])
+        
         plt.savefig(savename, dpi=200, format=saveformat, transparent=tchoice)
         plt.close()
         
@@ -2138,8 +2147,8 @@ class CPanel(object):
                     cblabel = para.split('_')[0].title(
                     ) + ' DEF (PA = {})'.format(para.split('U')[-1]) + ' \n $\mathrm{keV/(cm^2 \cdot s \cdot sr \cdot keV)}$'
                 elif para in ['ion_fluxPA', 'H+_fluxPA', 'O+_fluxPA', 'He+_fluxPA']:
-                    flux_min = 10**3
-                    flux_max = 10**6
+                    flux_min = 2*10**3
+                    flux_max = 2*10**7
                     vert_min = 0
                     vert_max = 180
                     vert_label = 'Pitch Angle ($^\circ$)'
@@ -2218,9 +2227,9 @@ class CPanel(object):
                         self.PanelDict['SC_Pot'][sc][:, 1] 
                     photoe_energy = photoe_energy/1000
                     ax[i,0].plot(photoe_dtime, photoe_energy,
-                                 'k-', linewidth=0.5)
+                                 c='k',ls='solid', linewidth=2)
                     ax[i,0].plot(photoe_dtime, photoe_energy *
-                                 1.30, 'k--', linewidth=0.5)
+                                 1.30, c='k',ls=(5,(10,3)), linewidth=2)
 
 
                 dtime_ticks = []
@@ -2401,20 +2410,22 @@ class CPanel(object):
 """
 Example Script (Comment out if import module elsewhere)
 """
-
+"""
 start_dt = dt.datetime(2002,3,18,14,15,0)
 stop_dt = dt.datetime(2002,3,18,15,15,0)
-sclist = ['C1','C2','C3','C4']
-#paralist = ['ion_fluxU','e_fluxU','Bvec','ion_vel','SC_Pot'] #always put SCPot last, Fig 3
+sclist = ['C1']
+#sclist = ['C1','C2','C3','C4'] #for Fig. S2
+paralist = ['ion_fluxU','e_fluxU','Bvec','ion_vel','SC_Pot'] #always put SCPot last, Fig 3
 #paralist = ['H+_fluxU','He+_fluxU','O+_fluxU'] #Fig 4A-4C
 #paralist = ['H+_fluxPA','He+_fluxPA','O+_fluxPA','e_fluxPA','e_fluxU180','SC_Pot'] #Fig 4E-4I
-paralist = ['e_fluxU','SC_Pot'] #Fig S2, all four SCs and sc_comp=True
-#paralist = ['H+_fluxU_Sun','H+_fluxU_Dawn','H+_fluxU_Dusk','H+_fluxU_Antisun'] #Fig S3
+#paralist = ['e_fluxU','SC_Pot'] #Fig S2, all four SCs and sc_comp=True
+
 
 instrlist = ['FGM', 'CIS', 'PEA', 'EFW']
 saveformat = 'png'
 
 testcall = CPanel(start_dt, stop_dt, sclist, paralist, instrlist, saveformat,
                   new_dl=True, veccomb=True, sc_comp=False, autoplot=True,
-                  MP_HL=True, Walen_HL=True, label_start='E', xax_view=0, mode='light', 
+                  MP_HL=True, Walen_HL=True, label_start='B', xax_view=1, mode='light', 
                   data_record=True)
+"""

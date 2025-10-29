@@ -1,5 +1,5 @@
 """
-Edition Date: 2025-September-02
+Edition Date: 2025-October-29
 @author: Nawapat Kaweeyanun
 """
 
@@ -16,6 +16,7 @@ import OverlayPlotter as OP
 from T96Analyze import T96Analyze #import class specifically
 import SSUSI_GUVI_Data as SGD
 import IMAGE_Timeseries as IMT
+import IMAGE_Data as IMD
 
 
 """
@@ -143,8 +144,8 @@ class FTOverlay(object):
             plot_dict.update({sc:dict_all[sc][self.dt_dict[sc]==dtime]})
         return plot_dict
 
-    def IMOverlayCaller(self,savefolder,IMtypelist=['WIC','S12'],final_save=True,mode='light',
-                        saveformat='png',data_record=False,IMdt_manual_list = []):
+    def IMOverlayCaller(self,savefolder,IMtypelist=['WIC','S12','S13'],final_save=True,mode='light',
+                        cbar_on=True,saveformat='png',data_record=False,IMdt_manual_list = [],HiRes=False):
         #Plot Cluster footprint overlaying IMAGE aurora figures.
         
         #Create union of datetimes for all spacecrafts (some do not have footprint data)
@@ -172,45 +173,55 @@ class FTOverlay(object):
         if len(IMdt_union) == 1:
             ncol = 1
         elif len(IMdt_union) <= 4:
-            ncol = len(dt_union)
+            ncol = len(IMdt_union)
         elif len(IMdt_union) in [5,13,17,21,25]:
-            #Special cases where 3 looks best
+            #special cases where 3 looks best
             ncol = 3
         else:
             ncol = 4
-        
+                
+        #Loop over each IMAGE instrument
         for IMtype in IMtypelist:
-            #Create IMAGE plot
-            IMfig,IMax,hno_arr = IMT.timeseries_plot(IMdt_union, ncol, IMtype,None,False,mode,'png',False) #Not save intially.
-            #hno is number 0 = north, 1 = south, np.nan = else/corrupted
+            
+            if HiRes == False: #Plot ECLAT IMAGE
+                IMfig,IMax,hno_arr = IMT.timeseries_plot(IMdt_union, ncol, IMtype,None,False,mode,'png',False) #not save intially.
+            elif HiRes == True: #Plot high-resolution IMAGE
+                idlfilelist = ['wic20020771430.idl','wic20020771444.idl','wic20020771454.idl','wic20020771509.idl',
+                               's1320020771430.idl','s1320020771444.idl','s1320020771454.idl','s1320020771509.idl',
+                               's1220020771430.idl','s1220020771444.idl','s1220020771454.idl','s1220020771509.idl']
+                timeseries = True
+                save = False
+                IHS = IMD.ImHighRes(idlfilelist,IMtype,IMdt_union)
+                IMfig,IMax,hno_arr = IHS.Plotter(IHS.DataDict,timeseries,ncol,mode,cbar_on,save,data_record)  
             
             #Call overlay function using footprint dictionaries as inputs
+            #Datetimes used to produce dict = datetimes in plot    
             IMfig,IMax = OP.IMTSOverlay(IMfig,IMax,IMtype,hno_arr,dt_union,self.dt_dict,self.agm_latN_dict,
                                         self.agm_mltN_dict,self.rhoN_dict,self.agm_latS_dict,self.agm_mltS_dict,
-                                        self.rhoS_dict,final_save,savefolder,mode,saveformat,data_record)
+                                        self.rhoS_dict,IMdt_union,HiRes,final_save,savefolder,mode,saveformat,data_record)
+        
+      
             
             
     
-    def SGOverlayCaller(self,satellite,datafolder,savefolder,SSinstrlist=['F16','F17','F18','F19'],
-                        Chan=[5],final_save=True,mode='light',saveformat='png',
-                        filepath_manual_list = []):
+    def SGOverlayCaller(self,mission,datafolder,savefolder,SGsclist,
+                        Chan=[5],cap='B',cbar_on=True,final_save=True,
+                        mode='light',saveformat='png',filepath_manual_list = []):
         
         #Plot Cluster footprint overlaying SSUSI/GUVI aurora figures.
         
         #Get all file paths within footprint datetime range (only if no manual input)
         if len(filepath_manual_list) == 0: 
             filepath_list = []
-            
             #Search for closest-orbit SSUSI/GUVI data file
             for dtime in self.dtimelist:
-                if satellite == 'SSUSI':
-                    for SSinstr in SSinstrlist:
-                        filepath = SP.SSUSI_filesearch(datafolder,'EDR-Aur',SSinstr,dtime)
+                if mission == 'SSUSI':
+                    for instr in SGsclist:
+                        filepath = SP.SSUSI_filesearch(datafolder,'EDR-Aur',instr,dtime)
                         filepath_list.append(filepath)
-                elif satellite == 'GUVI':
+                elif mission == 'GUVI':
                     filepath = SP.GUVI_filesearch(datafolder, 'EDR-Aur', dtime)
                     filepath_list.append(filepath)
-        
             #Remove file duplicates
             filepath_list = list(set(filepath_list))
         #Or can input data file path
@@ -224,11 +235,12 @@ class FTOverlay(object):
             #Extract data
             DataSet = SGD.SGExtract(filepath)
             #Plot aurora scan
-            fig,ax = DataSet.EDR_Aurora_Plot(DataSet.EDR_Aurora_Data,Chan,mode,save=False)
+            fig,ax = DataSet.EDR_Aurora_Plot(DataSet.EDR_Aurora_Data,Chan,mode,cap,cbar_on,save=False)
+            switch = True #allow conjugate footprints
             
             #For each footprint datetime, overlay footprint
             for ft_dt in self.dtimelist:
-                ft_latN = self.dict_dtime_filter(self.agm_latN_dict,ft_dt) #change from agm to mag
+                ft_latN = self.dict_dtime_filter(self.agm_latN_dict,ft_dt)
                 ft_mltN = self.dict_dtime_filter(self.agm_mltN_dict,ft_dt)
                 ft_rhoN = self.dict_dtime_filter(self.rhoN_dict,ft_dt)
                 ft_latS = self.dict_dtime_filter(self.agm_latS_dict,ft_dt)
@@ -236,15 +248,10 @@ class FTOverlay(object):
                 ft_rhoS = self.dict_dtime_filter(self.rhoS_dict,ft_dt)
                     
                 #Note: toggle switch == True allows footprint to be flipped (see switch function in OverlayPlotter.py)
-                if satellite == 'SSUSI': 
-                    for SSinstr in SSinstrlist:
-                        fig,ax = OP.SGOverlay(fig,ax,ft_dt,ft_latN,ft_mltN,ft_rhoN,ft_latS,ft_mltS,
-                                              ft_rhoS,satellite,SSinstr,Chan,DataSet.StopOrbNo,
-                                              True,mode,final_save,savefolder,saveformat)
-                elif satellite == 'GUVI':
+                for sc in SGsclist:
                     fig,ax = OP.SGOverlay(fig,ax,ft_dt,ft_latN,ft_mltN,ft_rhoN,ft_latS,ft_mltS,
-                                          ft_rhoS,satellite,'TIMED',Chan,DataSet.StopOrbNo,
-                                          True,mode,final_save,savefolder,saveformat)
+                                          ft_rhoS,sc,Chan,DataSet.StopOrbNo,
+                                          cap,switch,mode,final_save,savefolder,saveformat)
 
 """
 Main Script
@@ -268,25 +275,34 @@ FT = FTOverlay(dtimelist,sclist,FTFolder)
 satellite = 'IMAGE'
 IMtypelist = ['WIC']
 save = True
-savefolder='IMAGE_Timeseries_T96'
-mode = 'light'
+#savefolder = 'ImHighRes_T96'
+mode = 'dark'
+cbar_on = False
 saveformat = 'png'
-data_record =False
+data_record = False
 IMdt_manual_list = []
-FT.IMOverlayCaller(savefolder,IMtypelist,save,mode,saveformat,data_record,
-                   IMdt_manual_list)
+HiRes = True
+FT.IMOverlayCaller(savefolder,IMtypelist,save,mode,cbar_on,saveformat,data_record,
+                   IMdt_manual_list,HiRes)
 """
 
 """
-satellite = 'GUVI'
-datafolder = 'Datafiles_{}'.format(satellite)
-SSinstrlist = ['F16']
+
+mission = 'GUVI'
+datafolder = 'Datafiles_{}'.format(mission)
+SSsclist = ['F16']
+if mission == 'GUVI':
+    SGsclist = ['TIMED']
+else:
+    SGsclist = SSsclist
 Chan = [3,4]
+cap = 'N'
+cbar_on = False
 save = True
-savefolder = '{}_T96'.format(satellite)
+savefolder = '{}_T96'.format(mission)
 mode = 'light'
 saveformat = 'png'
 filepath_manual_list = ['Datafiles_GUVI/edr-aur/2002/113/']
-FT.SGOverlayCaller(satellite,datafolder,savefolder,SSinstrlist,Chan,save,mode,saveformat,
-                   filepath_manual_list)
+FT.SGOverlayCaller(mission,datafolder,savefolder,SGsclist,Chan,cap,cbar_on,
+                   save,mode,saveformat,filepath_manual_list)
 """
