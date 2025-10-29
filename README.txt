@@ -1,9 +1,9 @@
 
-READ ME File For "[Dataset] Close Detection of Magnetic Reconnection between A Transpolar Arc and the Interplanetary Magnetic Field"
+READ ME File For "[Dataset] Detection of Magnetic Reconnection between A Transpolar Arc and the Interplanetary Magnetic Field"
 
-Dataset DOI: 10.5258/SOTON/D3194 
+Dataset DOI: 10.5258/SOTON/D3194 (or 10.5281/zenodo.17077827)
 
-Date that the file was created: September, 2025
+Date that the file was created: October, 2025
 
 -------------------
 GENERAL INFORMATION
@@ -11,7 +11,7 @@ GENERAL INFORMATION
 
 ReadMe Author: NAWAPAT KAWEEYANUN, University of Southampton, ORCID ID: 0000-0003-0634-0164
 
-Date of data collection: 7 August 2024 - 2 September 2025
+Date of data collection: 7 August 2024 - 24 October 2025
 
 Information about geographic location of data collection: Southampton, U.K.
 
@@ -28,7 +28,7 @@ Recommended citation for the data:
 
 This dataset supports the publication:
 AUTHORS: Nawapat Kaweeyanun, Robert C. Fear, Betty S. Lanchester, Daniel K. Whiter, Imogen L. Gingell, Andrew N. Fazakerley, Iannis Dandouras, Stephen B. Mende, Larry J. Paxton  
-TITLE: Close Detection of Magnetic Reconnection between A Transpolar Arc and the Interplanetary Magnetic Field
+TITLE: Detection of Magnetic Reconnection between A Transpolar Arc and the Interplanetary Magnetic Field
 JOURNAL: Geophysical Research Letters
 PAPER DOI IF KNOWN:
 
@@ -64,7 +64,8 @@ Subfolder files:
 - CSA_Extract.py: Python module to extract data from ESA's Cluster Science Archive
 - Cluster_Instr_Data.py: Python module to read CDF Cluster data files from Cluster Science Archive
 - CSA Organiser.py: Python function to shift downloaded CDF data files from Cluster Science Archive
-- Footprint_Aurora_Overlay.py Python script to overlay Cluster's magnetic footprint on IMAGE's aurora figure.
+- Footprint_Aurora_Overlay.py: Python script to overlay Cluster's magnetic footprint on IMAGE's aurora figure.
+- FluxLineSum.py: Python module to plot combined Cluster particle fluxes above a defined energy threshold.
 - GeotailExtract.py: Python module to extract data from JAXA/DARTS's Geotail webpage.
 - IMAGE_Data.py: Python module to read CDF IMAGE data files from Cluster Science Archive.
 - IMAGE_Timeseries.py: Python function to generate a timeseries plot of IMAGE's aurora observations.
@@ -81,19 +82,17 @@ Subfolder files:
 
 Fig2: directory containing spreadsheet files for variables in Fig. 2 of manuscript.
 
-Subfolder files (alphabetical order)
-- C1_Footprint_2002-03-18.csv: Cluster-1's magnetic footprint for 2002-03-18 at 14:15, 14:35, 14:55, and 15:15 UT
-- Fig2A_IMAGE_WIC_2002-03-18T14-15-55Z.csv: IMAGE data, WIC instrument, taken at 2002-03-18 14:15 UT (used in Fig. 2A).
-- Fig2B_IMAGE_WIC_2002-03-18T14-34-21Z.csv: IMAGE data, WIC instrument, taken at 2002-03-18 14:35 UT (used in Fig. 2B).
-- Fig2C_IMAGE_WIC_2002-03-18T14-54-50Z.csv: IMAGE data, WIC instrument, taken at 2002-03-18 14:55 UT (used in Fig. 2C). 
-- Fig2D_IMAGE_WIC_2002-03-18T15-15-18Z.csv: IMAGE data, WIC instrument, taken at 2002-03-18 15:15 UT (used in Fig. 2D).
-- Fig2E_IMAGE_S12_2002-03-18T14-15-55Z.csv: IMAGE data, S12/SI-12 instrument, taken at 2002-03-18 14:15 UT (used in Fig. 2E).
-- Fig2F_IMAGE_S12_2002-03-18T14-34-21Z.csv: IMAGE data, S12/SI-12 instrument, taken at 2002-03-18 14:35 UT (used in Fig. 2F).
-- Fig2G_IMAGE_S12_2002-03-18T14-54-50Z.csv: IMAGE data, S12/SI-12 instrument, taken at 2002-03-18 14:55 UT (used in Fig. 2G).
-- Fig2H_IMAGE_S12_2002-03-18T15-15-18Z.csv: IMAGE data, S12/SI-12 instrument, taken at 2002-03-18 15:15 UT (used in Fig. 2H).
-- Fig2I_GUVI_Orb1494_Channel3+4_2002077143307_2002077161022_IntN.csv: GUVI radiance data for Orbit 1494 (northern polar cap, used in Fig. 2I).
-- Fig2I_GUVI_Orb1494_Channel3+4_2002077143307_2002077161022_MAGLat: GUVI AACGM latitude data for Orbit 1494 (northern polar cap, used in Fig. 2I).
-- Fig2I_GUVI_Orb1494_Channel3+4_2002077143307_2002077161022_MLT: GUVI AACGM MLT data for Orbit 1494 (northern polar cap, used in Fig. 2I).
+Subfolder files
+- C1_Footprint_2002-03-18.csv: Cluster-1's magnetic footprint for 2002-03-18 at 14:30, 14:44, 14:54, and 15:09 UT
+- Fig2{Letter}_IMAGE_HighRes_Data_{Instrument}_{Datetime}_{variable}.csv
+	Letter = label corresponding to the subplot (A to L)
+	Instrument = IMAGE instrument (WIC, S13 or S12)
+	Datetime = datetime of data (14:30, 14:44, 14:54, and 15:09 UT on 18 March 2002)
+	Variable = whether data is intensity ("image"), magnetic latitude ("mlat") or magnetic local time ("mlt")
+- Fig2M_GUVI_Orb1494_Channel3+4_2002077143307_2002077161022_IntN.csv: GUVI radiance data for Orbit 1494 (northern polar cap, used in Fig. 2M).
+- Fig2M_GUVI_Orb1494_Channel3+4_2002077143307_2002077161022_MAGLat: GUVI AACGM latitude data for Orbit 1494 (northern polar cap, used in Fig. 2M).
+- Fig2M_GUVI_Orb1494_Channel3+4_2002077143307_2002077161022_MLT: GUVI AACGM MLT data for Orbit 1494 (northern polar cap, used in Fig. 2M).
+- TIMED_Geo_18Mar02.csv: TIMED trajectory in geographic coordinates between 14:45-15:15 UT on 18 March 2002 (used in Fig. 2M)
 
 
 Fig3: directory containing spreadsheet files for variables in Fig. 3 of manuscript.
@@ -105,6 +104,8 @@ Subfolder files:
 	Ion differential energy flux, sorted by energy and datetime, from Cluster-1's ion spectrometer between 14:15-15:15 UT, 18 March 2002 (used in Fig. 3B)
 - Fig3C_e_fluxU_C1_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv: 
 	Electron differential energy flux, sorted by energy and datetime, from Cluster-1's electron spectrometer between 14:15-15:15 UT, 18 March 2002 (used in Fig. 3C)
+- Fig3C_SC_Pot_C1_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
+	Spacecraft potential from Cluster-1's electric field and wave instrument between 14:15-15:15 UT, 18 March 2002 (used in Fig. 3C)
 - Fig3D_Bvec_C1_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv: 
 	Magnetic field data from Cluster-1's fluxgate magnetometer between 14:15-15:15 UT, 18 March 2002 (used in Fig. 3D).
 - Fig3E_ion_vel_C1_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
@@ -135,6 +136,8 @@ Subfolder files:
 	Electron differential energy flux, sorted by pitch angle and datetime, from Cluster-4's electron spectrometer between 14:15-15:15 UT, 18 March 2002 (used in Fig. 4H)
 - Fig4I_e_fluxU180_C4_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
 	Electron differential energy flux, sorted by energy and datetime, at 180 deg pitch angle (field-antiparallel) from Cluster-4's electron spectrometer between 14:15-15:15 UT, 18 March 2002 (used in Fig. 4I)
+- Fig4I_SC_Pot_C4_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
+	Spacecraft potential from Cluster-4's electric field and wave instrument between 14:15-15:15 UT, 18 March 2002 (used in Fig. 4I)
 
 
 FigS1: directory containing spreadsheet files for variables in Fig. S1 of manuscript.
@@ -148,12 +151,20 @@ FigS2: directory containing spreadsheet files for variables in Fig. S2 of manusc
 Subfolder files:
 - FigS2A_e_fluxU_C1_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
 	Electron differential energy flux, sorted by energy and datetime, from Cluster-1's electron spectrometer between 14:15-15:15 UT, 18 March 2002 (used in Fig. S2A, same as Fig. 3C)
+- FigS2A_SC_Pot_C1_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
+	Spacecraft potential from Cluster-1's electric field and wave instrument between 14:15-15:15 UT, 18 March 2002 (used in Fig. S2A, same as Fig. 3C)
 - FigS2B_e_fluxU_C2_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
 	Electron differential energy flux, sorted by energy and datetime, from Cluster-2's electron spectrometer between 14:15-15:15 UT, 18 March 2002 (used in Fig. S2B)
+- FigS2B_SC_Pot_C2_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
+	Spacecraft potential from Cluster-2's electric field and wave instrument between 14:15-15:15 UT, 18 March 2002 (used in Fig. S2B)
 - FigS2C_e_fluxU_C3_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
 	Electron differential energy flux, sorted by energy and datetime, from Cluster-3's electron spectrometer between 14:15-15:15 UT, 18 March 2002 (used in Fig. S2C)
+- FigS2C_SC_Pot_C3_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
+	Spacecraft potential from Cluster-3's electric field and wave instrument between 14:15-15:15 UT, 18 March 2002 (used in Fig. S2C)
 - FigS2D_e_fluxU_C4_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
 	Electron differential energy flux, sorted by energy and datetime, from Cluster-4's electron spectrometer between 14:15-15:15 UT, 18 March 2002 (used in Fig. S2D)
+- FigS2D_SC_Pot_C4_2002-03-18T14-15-00Z_2002-03-18T15-15-00Z.csv:
+	Spacecraft potential from Cluster-4's electric field and wave instrument between 14:15-15:15 UT, 18 March 2002 (used in Fig. S2D, same as Fig. 4I)
  
 
 FigS3: directory containing spreadsheet files for variables in Fig. S3 of manuscript.
@@ -167,6 +178,8 @@ Subfolder files:
 	Proton differential energy flux travelling in duskward direction, sorted by energy and datetime, from Cluster-4's ion spectrometer between 14:49 - 14:54 UT, 18 March 2002 (used in Fig. S3C)
 - FigS3D_H+_fluxU_Antisun_C4_2002-03-18T14-49-00Z_2002-03-18T14-54-00Z.csv: 
 	Proton differential energy flux travelling in antisunward direction, sorted by energy and datetime, from Cluster-4's ion spectrometer between 14:49 - 14:54 UT, 18 March 2002 (used in Fig. S3D)
+- FigS3E_LineSum_C4_2002-03-18T14-49-00Z_2002-03-18T14-54-00Z.csv:
+	Sums of proton differential energy flux above 10 keV in sunward, dawnward, duskward, and antisunward direction, from Cluster-4's ion spectrometer between 14:49 - 14:54 UT, 18 March 2002 (used in Fig. S3E)
 
 
 Relationship between files, if important for context: Analysis code files form a singular Python module that must be placed in the same folder when used for analysis.  
@@ -231,9 +244,7 @@ Raw data is entered into the code files in the Analysis_Code.zip. Follow below i
     2. Run PanelPlotter.py to obtain Fig. S2A-S2D.
 
 - Fig. S3:
-    1. In PanelPlotter.py select the parameter list ('paralist') marked Fig. S3 and set the spacecraft list ('sclist') to ['C4'] in the main calling script. .
-    2. Set the time interval to 14:49 and 14:54 UT and set sc_comp option to False
-    2. Run PannelPlotter.py to obtain Cluster plots (Fig. S3A-S3D). 
+    1. Run script at the end of FluxLineSum.py at pre-defined time intervals to obtain Fig. S1.
 
 
 Software- or Instrument-specific information needed to interpret the data, including software and hardware version numbers: 
@@ -271,15 +282,20 @@ Missing data codes: N/A
 Specialised formats or other abbreviations used: N/A
 
 
-For each IMAGE (WIC or S12) data file
-Number of variables: 3
-Number of cases/rows: 42 columns, 40 rows
-Variable list, defining any abbreviations, units of measure, codes or symbols used:
-1st column = ith coordinate array (km)
-2nd column = jth -coordinate array (km)
-Remaining 40x40 block = IMAGE intensity data (R) (i varies along horizontal axis, j varies along vertical axis)
-Missing data codes: N/A
-Specialised formats or other abbreviations used:
+For each IMAGE WIC/S13/S12 intensity ("image") data file
+Number of variables: 1
+Number of cases/rows: 256 columns, 256 rows (WIC); 128 rows, 128 columns (S13/S12) 
+All: IMAGE intensity data (R) corresponding to magnetic latitude and local time (in separate files)
+
+For each IMAGE WIC/S13/S12 magnetic latitude ("mlat") data file
+Number of variables: 1
+Number of cases/rows: 256 columns, 256 rows (WIC); 128 rows, 128 columns (S13/S12) 
+All: IMAGE magnetic latitude (degree) corresponding to magnetic local time and intensity (in separate files)
+
+For each IMAGE WIC/S13/S12 magnetic local time ("mlt") data file
+Number of variables: 1
+Number of cases/rows: 256 columns, 256 rows (WIC); 128 rows, 128 columns (S13/S12) 
+All: IMAGE magnetic local time (0-24) corresponding to magnetic latitude and intensity (in separate files)
 
 For GUVI IntN Data file
 Number of variables: 1
@@ -329,6 +345,16 @@ Variable list, defining any abbreviations, units of measure, codes or symbols us
 Remaining 892x44 array = Electron differential energy flux (keV/cm^2/s/sr/keV)
 Missing data codes: N/A
 Specialised formats or other abbreviations used: N/A
+
+Fig 3C (Spacecraft Potential, Cluster-1)
+Number of variables: 2
+Number of cases/rows: 2 columns, 900 rows
+Variable list, defining any abbreviations, units of measure, codes or symbols used:
+1st column = Datetime
+2nd column = Spacecraft potential (keV)
+Missing data codes: N/A
+Specialised formats or other abbreviations used: N/A
+
 
 Fig 3D (B-field, Cluster-1)
 Number of variables: 4
@@ -452,6 +478,15 @@ Remaining 883x44 array = Electron differential energy flux (keV/cm^2/s/sr/keV)
 Missing data codes: N/A
 Specialised formats or other abbreviations used: N/A
 
+Fig 4I (Spacecraft Potential, Cluster-4)
+Number of variables: 2
+Number of cases/rows: 2 columns, 900 rows
+Variable list, defining any abbreviations, units of measure, codes or symbols used:
+1st column = Datetime
+2nd column = Spacecraft potential (keV)
+Missing data codes: N/A
+Specialised formats or other abbreviations used: N/A
+
 Fig S1 (Walen test, Cluster 1)
 Number of variables: 13
 Number of cases/rows: 13 columns, 85 rows
@@ -482,6 +517,15 @@ Remaining 892x44 array = Electron differential energy flux (keV/cm^2/s/sr/keV)
 Missing data codes: N/A
 Specialised formats or other abbreviations used: N/A
 
+Fig S2A (Spacecraft Potential, Cluster-1)
+Number of variables: 2
+Number of cases/rows: 2 columns, 900 rows
+Variable list, defining any abbreviations, units of measure, codes or symbols used:
+1st column = Datetime
+2nd column = Spacecraft potential (keV)
+Missing data codes: N/A
+Specialised formats or other abbreviations used: N/A
+
 Fig S2B (Electron differential energy flux, Cluster 2)
 Number of variables: 3
 Number of cases/rows: 46 columns, 900 rows
@@ -489,6 +533,15 @@ Variable list, defining any abbreviations, units of measure, codes or symbols us
 1st column = Datetime
 2nd column = Energy (keV)
 Remaining 900x44 array = Electron differential energy flux (keV/cm^2/s/sr/keV)
+Missing data codes: N/A
+Specialised formats or other abbreviations used: N/A
+
+Fig S2B (Spacecraft Potential, Cluster-2)
+Number of variables: 2
+Number of cases/rows: 2 columns, 900 rows
+Variable list, defining any abbreviations, units of measure, codes or symbols used:
+1st column = Datetime
+2nd column = Spacecraft potential (keV)
 Missing data codes: N/A
 Specialised formats or other abbreviations used: N/A
 
@@ -502,6 +555,14 @@ Remaining 899x44 array = Electron differential energy flux (keV/cm^2/s/sr/keV)
 Missing data codes: N/A
 Specialised formats or other abbreviations used: N/A
 
+Fig S2C (Spacecraft Potential, Cluster-3)
+Number of variables: 2
+Number of cases/rows: 2 columns, 900 rows
+Variable list, defining any abbreviations, units of measure, codes or symbols used:
+1st column = Datetime
+2nd column = Spacecraft potential (keV)
+Missing data codes: N/A
+Specialised formats or other abbreviations used: N/A
 
 Fig S2D (Electron differential energy flux, Cluster 4)
 Number of variables: 3
@@ -513,6 +574,14 @@ Remaining 883x44 array = Electron differential energy flux (keV/cm^2/s/sr/keV)
 Missing data codes: N/A
 Specialised formats or other abbreviations used: N/A
 
+Fig S2D (Spacecraft Potential, Cluster-4)
+Number of variables: 2
+Number of cases/rows: 2 columns, 900 rows
+Variable list, defining any abbreviations, units of measure, codes or symbols used:
+1st column = Datetime
+2nd column = Spacecraft potential (keV)
+Missing data codes: N/A
+Specialised formats or other abbreviations used: N/A
 
 Fig S3A-D (Proton differential energy flux, sunward/dawnward/duskward/antisunward, Cluster-4)
 Number of variables: 3
@@ -523,3 +592,17 @@ Variable list, defining any abbreviations, units of measure, codes or symbols us
 Remaining 37x31 array = Proton differential energy flux (keV/cm^2/s/sr/keV)
 Missing data codes: N/A
 Specialised formats or other abbreviations used: N/A
+
+Fig S3E (Particle flux sum > 10 keV, sunward/dawnward/duskward/antisunward, Cluster-4)
+Number of variables: 5
+Number of cases/rows: 5 columns, 37 rows
+Variable list, defining any abbreviations, units of measure, codes or symbols used:
+1st column = Datetime
+2nd column = Sunward >10 keV flux sum (keV/cm^2/s/sr/keV)
+3rd column = Dawnward >10 keV flux sum (keV/cm^2/s/sr/keV)
+4th column = Duskward >10 keV flux sum (keV/cm^2/s/sr/keV)
+5th column = Antisunward >10 keV flux sum (keV/cm^2/s/sr/keV)
+Missing data codes: N/A
+Specialised formats or other abbreviations used: N/A
+
+
