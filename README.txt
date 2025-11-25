@@ -1,9 +1,9 @@
 
-READ ME File For "[Dataset] Detection of Magnetic Reconnection between A Transpolar Arc and the Interplanetary Magnetic Field"
+READ ME File For "[Dataset] Detection of High-Latitude Magnetic Reconnection between the Northward Interplanetary Magnetic Field and a Closed Magnetic Field Wedge Linked to a Transpolar Arc"
 
-Dataset DOI: 10.5258/SOTON/D3194 (or 10.5281/zenodo.17077827)
+Dataset DOI: 10.5258/SOTON/D3194
 
-Date that the file was created: October, 2025
+Date that the file was created: 25 November 2025
 
 -------------------
 GENERAL INFORMATION
